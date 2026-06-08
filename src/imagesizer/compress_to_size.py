@@ -15,12 +15,12 @@ def get_file_size(file):
     file.seek(0)
     return filesize
 
-def compress_to_size(input_image_path, output_image_path, max_size, size_unit="mb", compression_steps = 5):
+def compress_to_size(input_image_path, output_image_path, max_size, unit="mb", compression_steps = 5):
 
-    if size_unit not in BYTES_CONVERSION:
-            raise ValueError(f"Invalid size_unit '{size_unit}'. Must be one of: {list(BYTES_CONVERSION.keys())}")
+    if unit not in BYTES_CONVERSION:
+            raise ValueError(f"Invalid unit '{unit}'. Must be one of: {list(BYTES_CONVERSION.keys())}")
 
-    max_size_bytes = max_size * BYTES_CONVERSION[size_unit]
+    max_size_bytes = max_size * BYTES_CONVERSION[unit]
 
     try:
         with Image.open(input_image_path) as im:
@@ -39,22 +39,25 @@ def compress_to_size(input_image_path, output_image_path, max_size, size_unit="m
         
     else:
 
-        compression_factor = 85
+        quality_level = 85
+        compress_level = 1
+
         min_quality = 10
+        max_compression = 9
 
         with Image.open(input_image_path) as im:
 
-            while compression_factor >= min_quality:
+            while quality_level >= min_quality:
                 byte_arr = io.BytesIO()
-                im.save(byte_arr, format=file_format, quality=compression_factor)
+                im.save(byte_arr, format=file_format, quality=quality_level)
                 filesize = get_file_size(byte_arr)
 
                 if filesize <= max_size_bytes:
                     break
 
-                compression_factor -= compression_steps
+                quality_level -= compression_steps
             
             else:
                 raise ValueError("Could not compress image below max_size_bytes")
         
-            im.save(output_image_path, format=file_format, quality=compression_factor)
+            im.save(output_image_path, format=file_format, quality=quality_level)
