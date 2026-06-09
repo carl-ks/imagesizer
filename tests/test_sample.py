@@ -3,6 +3,7 @@ from imagesizer import compress_to_size
 import pytest
 import io
 import tempfile
+from PIL import Image
 
 class TestBasicFunctions:
     def test_jpeg(self):        
@@ -35,11 +36,11 @@ class TestBasicFunctions:
         output_size = output_file.tell()
         assert output_size <= 10_000_000
 
-    # def test_png(self):        
-    #     output_path = io.BytesIO()
-    #     compress_to_size("tests/images/test_image.png", output_path, max_size=10)
-    #     output_size = output_path.tell()
-    #     assert output_size <= 10_000_000
+    def test_png(self):        
+        output_path = io.BytesIO()
+        compress_to_size("tests/images/test_image.png", output_path, max_size=18)
+        output_size = output_path.tell()
+        assert output_size <= 18_000_000
 
     def test_webp(self):        
         output_path = io.BytesIO()
@@ -61,7 +62,7 @@ def test_wrong_unit():
     with pytest.raises(ValueError):
         compress_to_size("tests/images/test_image.jpg", output_path, max_size=1, unit="megabyte")
 
-def test_compression_not_possible():
+def test_max_size_not_possible():
     output_path = io.BytesIO()
     with pytest.raises(ValueError):
         compress_to_size("tests/images/test_image.jpg", output_path, max_size=0.01)
@@ -72,4 +73,23 @@ def test_compression_not_possible():
     with pytest.raises(ValueError):
         compress_to_size("tests/images/test_image.jpg", output_path, max_size=-1)
 
-# compress_to_size("tests/images/test_image.jpg", "tests/images/test_image_test.jpg", max_size=0)
+
+def test_compression_steps():
+    output_path = io.BytesIO()
+    with pytest.raises(ValueError):
+        compress_to_size("tests/images/test_image.jpg", output_path, max_size=1, compression_steps=5.5)
+
+    with pytest.raises(ValueError):
+            compress_to_size("tests/images/test_image.jpg", output_path, max_size=1, compression_steps=-1)
+
+    with pytest.raises(ValueError):
+            compress_to_size("tests/images/test_image.jpg", output_path, max_size=1, compression_steps=0)
+
+def test_output_is_image():
+    output_path = io.BytesIO()
+    compress_to_size("tests/images/test_image.jpg", output_path, max_size=1)
+    with Image.open(output_path) as im:
+            assert im.size[0] > 0
+            assert im.size[1] > 0
+
+# compress_to_size("tests/images/test_image.png", "tests/images/test_image_test.png", max_size=17, compression_steps=1)
